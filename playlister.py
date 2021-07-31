@@ -4,14 +4,9 @@ import xml.etree.ElementTree as ET
 import hashlib
 import datetime
 
-beat_saber_path = "O:/SteamLibrarySSD/steamapps/common/Beat Saber/"
-
-default_custom_levels_dir = "Beat Saber_Data/CustomLevels"
-
-songcore_folder_data_path = "UserData/SongCore/folders.xml"
-
-tempfolder = "./1988c (Paranoia - Kival Evan & xScaramouche)"
-
+beat_saber_path = ""
+default_custom_levels_dir = ""
+songcore_folder_data_path = ""
 
 def create_playlist(title :str, author :str = "", description :str = "") -> dict:
     playlist = {}
@@ -24,8 +19,6 @@ def create_playlist(title :str, author :str = "", description :str = "") -> dict
 
 def is_custom_level_folder(folderpath :str) -> bool:
     return os.path.exists(folderpath + "/info.dat")
-
-
 
 def add_hash_to_playlist(playlist :dict, level_hash :str) -> dict:
     if not level_hash in playlist["songs"]:
@@ -75,17 +68,17 @@ def get_extra_song_folders(songcore_folder_dot_xml :str, include_wip :bool = Fal
         pack = int(folder.find('Pack').text)
         is_wip = folder.find('WIP').text == "True"
         image_path = folder.find('ImagePath').text
-        print("Name:" + name + ", Path:" + path + ", IsWIP:" + str(is_wip) + ", Pack:" + str(pack) + ", ImagePath:" + image_path)
+        print("[INFO] Extra Song Folder: Name:" + name + ", Path:" + path + ", IsWIP:" + str(is_wip) + ", Pack:" + str(pack) + ", ImagePath:" + image_path)
 
         if not include_wip and is_wip:
-            print("Skipping \"" + name + "\" as it's a WIP pack!")
+            print("[INFO] Skipping \"" + name + "\" as it's a WIP pack!")
             continue
 
         extras.append({"name": name, "path": path, "pack": pack, "wip": is_wip, "imagepath": image_path})
 
     return extras
 
-def set_paths(beatsaber_install_path :str):
+def set_paths(beatsaber_install_path :str, debug_print :bool = False):
     global beat_saber_path, default_custom_levels_dir, songcore_folder_data_path
 
     if beatsaber_install_path[-1:] == "/" or beatsaber_install_path[-1:] == "\\":
@@ -97,9 +90,10 @@ def set_paths(beatsaber_install_path :str):
 
     songcore_folder_data_path = beatsaber_install_path + "/UserData/SongCore/folders.xml"
 
-    print(beat_saber_path)
-    print(default_custom_levels_dir)
-    print(songcore_folder_data_path)
+    if debug_print:
+        print(beat_saber_path)
+        print(default_custom_levels_dir)
+        print(songcore_folder_data_path)
 
 def add_all_custom_songs_in_folder_to_playlist(playlist :dict, folderpath :str) -> dict:
     dirs = next(os.walk(folderpath))[1]
@@ -114,12 +108,6 @@ def add_all_custom_songs_in_folder_to_playlist(playlist :dict, folderpath :str) 
     return playlist
 
 if __name__ == "__main__":
-    # set_paths("O:/SteamLibrarySSD/steamapps/common/Beat Saber/")
-    
-    # playlist = create_playlist("All My Songs", "AuriRex", "Date Created: " +str(datetime.date.today()))
-
-    # add_all_custom_songs_in_folder_to_playlist(playlist, default_custom_levels_dir)
-
     path_is_invalid = True
     bs_path = ""
     while path_is_invalid:
@@ -127,13 +115,22 @@ if __name__ == "__main__":
         set_paths(bs_path)
         if os.path.exists(beat_saber_path + "/Beat Saber.exe"):
             path_is_invalid = False
+        else:
+            print("[ERROR] Invalid path!")
 
-    playlist = create_playlist("All My Songs", "AuriRex", "Date Created: " +str(datetime.date.today()))
+    title = input("(Optional) Playlist Title> ")
+    author = input("(Optional) Playlist Author> ")
+
+    if title == "":
+        title = "All My Songs"
+    if author == "":
+        author = "github.com/AuriRex/bs-playlister"
+
+    playlist = create_playlist(title, author, "Date Created: " +str(datetime.date.today()))
 
     print("[INFO] Adding all songs from the defualt song folder at \"" + default_custom_levels_dir + "\"!")
     playlist = add_all_custom_songs_in_folder_to_playlist(playlist, default_custom_levels_dir)
 
-    extras = None
     try:
         extras = get_extra_song_folders(songcore_folder_data_path)
 
@@ -147,10 +144,4 @@ if __name__ == "__main__":
     playlist_save_path = "./playlist.json"
     with open(playlist_save_path, "w") as file:
         file.write(json.dumps(playlist))
-        print("Written playlist to file \"" + playlist_save_path + "\". It contains " + str(len(playlist["songs"])) + " songs!")
-
-    # level_hash = hash_folder(tempfolder)
-    # print(level_hash)
-    # playlist = create_playlist("Title", "Meee", "cool playlist")
-    # playlist = add_hash_to_playlist(playlist, level_hash)
-    # print(json.dumps(playlist))
+        print("[INFO] Written playlist to file \"" + playlist_save_path + "\". It contains " + str(len(playlist["songs"])) + " songs!")
