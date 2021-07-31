@@ -39,11 +39,8 @@ def hash_folder(folderpath :str, printthing :bool = True) -> str:
 
 
         for diffset in info_dot_dat["_difficultyBeatmapSets"]:
-            #print(diffset["_beatmapCharacteristicName"])
             for difficulty in diffset["_difficultyBeatmaps"]:
-                #print(difficulty["_difficulty"])
                 filename = difficulty["_beatmapFilename"]
-                #print(filename)
                 with open(folderpath + "/" + filename, "rb") as file:
                     allbytes = allbytes + file.read()
 
